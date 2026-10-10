@@ -1,0 +1,107 @@
+{
+  "year": 2026,
+  "name": "McDonald's Monopoly 2026",
+  "daily_entry_limit": 8,
+  "claim_deadline": "2026-11-22",
+  "code_pattern": "[A-Z0-9]{8,16}",
+  "sets": [
+    {
+      "id": 1,
+      "name": "Brown",
+      "color": "#8B4513",
+      "pieces": [
+        { "number": 901, "name": "Mediterranean Avenue" },
+        { "number": 902, "name": "Baltic Avenue" }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Light Blue",
+      "color": "#7CC8EC",
+      "pieces": [
+        { "number": 903, "name": "Oriental Avenue" },
+        { "number": 904, "name": "Vermont Avenue" },
+        { "number": 905, "name": "Connecticut Avenue" }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Pink",
+      "color": "#D93A96",
+      "pieces": [
+        { "number": 906, "name": "St. Charles Place" },
+        { "number": 907, "name": "States Avenue" },
+        { "number": 908, "name": "Virginia Avenue" }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Orange",
+      "color": "#F7941D",
+      "pieces": [
+        { "number": 909, "name": "New York Avenue" },
+        { "number": 910, "name": "Tennessee Avenue" },
+        { "number": 911, "name": "St. James Place" }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Red",
+      "color": "#E11D2B",
+      "pieces": [
+        { "number": 912, "name": "Kentucky Avenue" },
+        { "number": 913, "name": "Indiana Avenue" },
+        { "number": 914, "name": "Illinois Avenue" }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Yellow",
+      "color": "#F5D90A",
+      "pieces": [
+        { "number": 915, "name": "Atlantic Avenue" },
+        { "number": 916, "name": "Ventnor Avenue" },
+        { "number": 917, "name": "Marvin Gardens" }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Green",
+      "color": "#1FB25A",
+      "pieces": [
+        { "number": 918, "name": "Pacific Avenue" },
+        { "number": 919, "name": "North Carolina Avenue" },
+        { "number": 920, "name": "Pennsylvania Avenue" }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Dark Blue",
+      "color": "#0B5CAD",
+      "pieces": [
+        { "number": 921, "name": "Park Place" },
+        { "number": 922, "name": "Boardwalk" }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Railroads",
+      "color": "#3F3F46",
+      "pieces": [
+        { "number": 923, "name": "Reading Railroad" },
+        { "number": 924, "name": "Pennsylvania Railroad" },
+        { "number": 925, "name": "B. & O. Railroad" },
+        { "number": 926, "name": "Short Line" }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Utilities",
+      "color": "#8A9099",
+      "pieces": [
+        { "number": 927, "name": "Water Works" },
+        { "number": 928, "name": "Electric Company" }
+      ]
+    }
+  ]
+}
