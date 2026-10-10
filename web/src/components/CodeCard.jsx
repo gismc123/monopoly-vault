@@ -3,7 +3,8 @@ import { api } from '../api.js'
 import { claimAndCopy } from '../clipboard.js'
 import { formatDateTime } from '../format.js'
 import Modal from './Modal.jsx'
-import { CopyIcon, LockIcon, TrashIcon } from './icons.jsx'
+import PhotoModal from './PhotoModal.jsx'
+import { CopyIcon, ImageIcon, LockIcon, TrashIcon } from './icons.jsx'
 
 const STATUS_LABEL = { available: 'Available', pending: 'Pending', used: 'Used' }
 
@@ -23,6 +24,7 @@ function whoName(person, me) {
 export default function CodeCard({ code, color, me, onChanged, onToast }) {
   const [busy, setBusy] = useState(false)
   const [manualCopy, setManualCopy] = useState(null)
+  const [showPhoto, setShowPhoto] = useState(false)
 
   async function run(action, successMessage) {
     setBusy(true)
@@ -96,6 +98,11 @@ export default function CodeCard({ code, color, me, onChanged, onToast }) {
             Private
           </button>
         )}
+        {code.has_photo && (
+          <button type="button" className="icon-btn" onClick={() => setShowPhoto(true)} aria-label="View sticker photo">
+            <ImageIcon size={20} />
+          </button>
+        )}
         {code.is_mine && code.status === 'available' && (
           <button type="button" className="icon-btn" onClick={remove} disabled={busy} aria-label="Delete code">
             <TrashIcon size={20} />
@@ -110,6 +117,8 @@ export default function CodeCard({ code, color, me, onChanged, onToast }) {
           <button type="button" className="btn btn-secondary" onClick={() => answer(false)} disabled={busy}>No</button>
         </div>
       )}
+
+      {showPhoto && <PhotoModal code={code} onClose={() => setShowPhoto(false)} />}
 
       {manualCopy && (
         <Modal title="Copy this code" onClose={() => setManualCopy(null)}>

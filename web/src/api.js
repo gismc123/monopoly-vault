@@ -72,3 +72,10 @@ export async function api(path, { method = 'GET', body, form } = {}) {
 export function timeZone() {
   try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' } catch { return 'UTC' }
 }
+
+/** Fetch a protected file (e.g. a sticker photo) and return an object URL for it. */
+export async function apiObjectUrl(path) {
+  const res = await fetch(`/api${path}`, { headers: memoryToken ? { Authorization: `Bearer ${memoryToken}` } : {} })
+  if (!res.ok) throw new ApiError(res.status, 'Could not load the photo.')
+  return URL.createObjectURL(await res.blob())
+}

@@ -1,6 +1,7 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -97,3 +98,15 @@ def delete(code_id: int, user: User = Depends(current_user), db: Session = Depen
     photo_path = svc.delete_code(db, code_id, user)
     if photo_path:
         photos.delete_photo(photo_path)
+
+
+@router.get("/{code_id}/photo")
+def photo(code_id: int, user: User = Depends(current_user), db: Session = Depends(get_db),
+          season: Season = Depends(current_season)):
+    """The original sticker photo, for anyone who can see the code."""
+    vault_id = current_vault_id(db, user, season.year)
+    code = svc.get_visible_code(db, code_id, user, vault_id)
+    path = photos.absolute_path(code.photo_path) if code.photo_path else None
+    if path is None or not path.is_file():
+        raise svc.AppError(404, "No photo for this code.")
+    return FileResponse(path, headers={"Cache-Control": "private, max-age=86400"})
