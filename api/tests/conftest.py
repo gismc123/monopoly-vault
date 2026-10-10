@@ -101,6 +101,6 @@ def stranger(client):
 @pytest.fixture
 def household(ivan, ebony):
     """Ivan creates a vault for the 2026 season and Ebony joins with the invite code."""
-    vault = ivan.post("/api/vault", {"name": "Santos"}).json()
+    vault = ivan.post("/api/vault", {"name": "Our Family"}).json()
     assert ebony.post("/api/vault/join", {"invite_code": vault["invite_code"]}).status_code == 200
     return ivan, ebony

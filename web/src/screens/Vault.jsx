@@ -54,7 +54,7 @@ function NoVault({ season, onJoined, onToast }) {
         <h3>Create a vault</h3>
         <label>
           Vault name
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Santos family" required maxLength={80} />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Smith family" required maxLength={80} />
         </label>
         <button className="btn btn-primary btn-block" disabled={busy}>Create vault</button>
       </form>

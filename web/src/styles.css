@@ -10,6 +10,7 @@
   --primary: #15803d;
   --primary-text: #ffffff;
   --brand: #c8102e;
+  --topbar: #c8102e;
   --focus: #2563eb;
   --available: #15803d;
   --available-bg: #dcfce7;
@@ -35,6 +36,7 @@
     --primary: #22c55e;
     --primary-text: #052e12;
     --brand: #f43f5e;
+    --topbar: #9f1239;
     --focus: #60a5fa;
     --available: #4ade80;
     --available-bg: #14341f;
@@ -96,7 +98,7 @@ button:disabled { opacity: .55; cursor: default; }
   justify-content: space-between;
   gap: 8px;
   padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
-  background: var(--brand);
+  background: var(--topbar);
   color: #fff;
 }
 

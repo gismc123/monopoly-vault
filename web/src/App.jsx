@@ -5,6 +5,7 @@ import { formatDay } from './format.js'
 import { HelpProvider, InfoButton } from './help.jsx'
 import Modal from './components/Modal.jsx'
 import PendingPrompt from './components/PendingPrompt.jsx'
+import { markSeen, newlyReadySets } from './readyAlerts.js'
 import { BoardIcon, CameraIcon, ListIcon, StarIcon, VaultIcon } from './components/icons.jsx'
 import Login from './screens/Login.jsx'
 import Board from './screens/Board.jsx'
@@ -74,11 +75,21 @@ function Shell({ user, season, onSignOut }) {
     api(`/season/today?tz=${encodeURIComponent(timeZone())}`).then(setToday).catch(() => {})
   }, [version])
 
-  function onSaved(result) {
-    onChanged()
+  // Announce sets that became ready since last time (e.g. completed by a vault-mate).
+  useEffect(() => {
+    newlyReadySets(user.id).then(showCompleted).catch(() => {})
+  }, [user.id])
+
+  function showCompleted(sets) {
     // One alert per set, even if it completed for both "mine" and "household".
-    const unique = [...new Map(result.completed_sets.map((s) => [s.id, s])).values()]
+    const unique = [...new Map(sets.map((s) => [s.id, s])).values()]
     if (unique.length) setCompletedSets(unique)
+  }
+
+  function onSaved(result) {
+    markSeen(user.id, result.completed_sets)
+    showCompleted(result.completed_sets)
+    onChanged()
   }
 
   const screenProps = { season, me: user, version, onChanged, onToast }
@@ -122,10 +133,10 @@ function Shell({ user, season, onSignOut }) {
           onDone={(changed) => { setToConfirm([]); if (changed) onChanged() }} />
       )}
 
-      {completedSets.length > 0 && (
+      {completedSets.length > 0 && toConfirm.length === 0 && (
         <Modal title="Set complete!" onClose={() => setCompletedSets([])} className="celebrate">
           <StarIcon size={40} />
-          <p>That code completed {completedSets.length === 1 ? 'a set' : 'these sets'}:</p>
+          <p>{completedSets.length === 1 ? 'This set is' : 'These sets are'} now complete:</p>
           <div className="ready-chips">
             {completedSets.map((s) => (
               <span key={s.id} className="set-chip" style={{ background: s.color, color: textOn(s.color) }}>

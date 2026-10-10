@@ -3,7 +3,7 @@ from conftest import BALTIC, BOARDWALK, PARK_PLACE
 
 
 def test_create_and_join_with_invite_code(ivan, ebony):
-    created = ivan.post("/api/vault", {"name": "Santos"})
+    created = ivan.post("/api/vault", {"name": "Our Family"})
     assert created.status_code == 201
     invite = created.json()["invite_code"]
 
@@ -28,7 +28,7 @@ def test_codes_added_before_joining_are_pooled(ivan, ebony):
     ebony.add_code("EARLY222", BOARDWALK)
     ebony.add_code("SECRET33", BALTIC, visibility="private")
 
-    vault = ivan.post("/api/vault", {"name": "Santos"}).json()
+    vault = ivan.post("/api/vault", {"name": "Our Family"}).json()
     ebony.post("/api/vault/join", {"invite_code": vault["invite_code"]})
 
     assert {c["code_text"] for c in ivan.codes()} == {"EARLY111", "EARLY222"}
