@@ -1,0 +1,88 @@
+import { useState } from 'react'
+import { api } from '../api.js'
+import { formatDateTime } from '../format.js'
+import { LockIcon, TrashIcon } from './icons.jsx'
+
+const STATUS_LABEL = { available: 'Available', pending: 'Pending', used: 'Used' }
+
+export function StatusBadge({ status }) {
+  return <span className={`status status-${status}`}>{STATUS_LABEL[status]}</span>
+}
+
+/** Codes are shown in groups of four so they're easier to read aloud or check. */
+export function prettyCode(text) {
+  return text.match(/.{1,4}/g).join(' ')
+}
+
+function whoName(person, me) {
+  return person.id === me ? 'you' : person.name
+}
+
+export default function CodeCard({ code, color, me, onChanged, onToast }) {
+  const [busy, setBusy] = useState(false)
+
+  async function run(action, successMessage) {
+    setBusy(true)
+    try {
+      await action()
+      if (successMessage) onToast(successMessage)
+      onChanged()
+    } catch (err) {
+      onToast(err.message, 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const togglePrivate = () => {
+    const visibility = code.visibility === 'private' ? 'shared' : 'private'
+    run(() => api(`/codes/${code.id}`, { method: 'PATCH', body: { visibility } }),
+      visibility === 'private' ? 'Code is now private' : 'Code is now shared with your vault')
+  }
+
+  const remove = () => {
+    if (!window.confirm(`Delete code ${prettyCode(code.code_text)}? This can't be undone.`)) return
+    run(() => api(`/codes/${code.id}`, { method: 'DELETE' }), 'Code deleted')
+  }
+
+  return (
+    <article className={`code-card is-${code.status}`} style={{ '--set-color': color }}>
+      <header className="code-card-head">
+        <div>
+          <div className="piece-name">
+            {code.piece_name} <span className="muted">#{code.piece_number}</span>
+          </div>
+          <div className="meta">
+            {code.is_mine ? 'Yours' : `${code.owner.name}'s`}
+            {code.visibility === 'private' && <span className="private-tag"><LockIcon size={14} /> Private</span>}
+          </div>
+        </div>
+        <StatusBadge status={code.status} />
+      </header>
+
+      <div className="code-text" aria-label={`Code ${code.code_text.split('').join(' ')}`}>{prettyCode(code.code_text)}</div>
+
+      {code.status === 'pending' && code.copied_by && (
+        <p className="meta">Copied by {whoName(code.copied_by, me)} · {formatDateTime(code.copied_at)}</p>
+      )}
+      {code.status === 'used' && code.used_by && (
+        <p className="meta">Used by {whoName(code.used_by, me)} · {formatDateTime(code.confirmed_at)}</p>
+      )}
+
+      <div className="code-actions">
+        {code.is_mine && (
+          <button type="button" role="switch" aria-checked={code.visibility === 'private'}
+            className="switch" onClick={togglePrivate} disabled={busy}>
+            <span className="switch-track" aria-hidden="true"><span className="switch-thumb" /></span>
+            Private
+          </button>
+        )}
+        {code.is_mine && code.status === 'available' && (
+          <button type="button" className="icon-btn" onClick={remove} disabled={busy} aria-label="Delete code">
+            <TrashIcon size={20} />
+          </button>
+        )}
+      </div>
+    </article>
+  )
+}
