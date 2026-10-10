@@ -1,12 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.routers import auth, codes, collection, season, session
+from app.routers import auth, codes, collection, season, session, vault
 from app.services.codes import AppError
 
 app = FastAPI(title="Monopoly Vault API", docs_url="/api/docs", openapi_url="/api/openapi.json")
 
-for module in (auth, season, session, codes, collection):
+for module in (auth, season, session, codes, collection, vault):
     app.include_router(module.router)
 
 

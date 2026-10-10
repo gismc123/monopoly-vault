@@ -99,14 +99,8 @@ def stranger(client):
 
 
 @pytest.fixture
-def household(ivan, ebony, db_session):
-    """Ivan and Ebony share a vault for the 2026 season."""
-    from app.models import Vault, VaultMember
-
-    with db_session() as db:
-        vault = Vault(name="Santos", campaign_year=2026, invite_code="TESTCODE", created_by_id=ivan.id)
-        db.add(vault)
-        db.flush()
-        db.add_all([VaultMember(user_id=ivan.id, vault_id=vault.id), VaultMember(user_id=ebony.id, vault_id=vault.id)])
-        db.commit()
+def household(ivan, ebony):
+    """Ivan creates a vault for the 2026 season and Ebony joins with the invite code."""
+    vault = ivan.post("/api/vault", {"name": "Santos"}).json()
+    assert ebony.post("/api/vault/join", {"invite_code": vault["invite_code"]}).status_code == 200
     return ivan, ebony
