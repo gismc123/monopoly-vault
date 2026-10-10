@@ -509,3 +509,25 @@ button:disabled { opacity: .55; cursor: default; }
   .sets { grid-template-columns: 1fr 1fr; }
   .app { border-left: 1px solid var(--border); border-right: 1px solid var(--border); background: var(--bg); }
 }
+
+/* ---------- Copy to redeem ---------- */
+
+.answer-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.answer-row .meta { flex: 1; }
+.answer-row .btn { min-height: 44px; padding: 8px 16px; }
+
+.manual-copy {
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 2px solid var(--focus);
+  border-radius: 10px;
+  background: var(--surface-2);
+  user-select: all;
+}
+
+.prompt-code { padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border-left: 6px solid var(--set-color); margin-bottom: 12px; }
+.prompt-code .code-text { margin: 4px 0; }
+.prompt-actions { display: grid; gap: 8px; }
+.prompt-progress { font-size: .85rem; color: var(--muted); }

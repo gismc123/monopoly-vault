@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { api } from '../api.js'
+import { claimAndCopy } from '../clipboard.js'
 import { formatDateTime } from '../format.js'
-import { LockIcon, TrashIcon } from './icons.jsx'
+import Modal from './Modal.jsx'
+import { CopyIcon, LockIcon, TrashIcon } from './icons.jsx'
 
 const STATUS_LABEL = { available: 'Available', pending: 'Pending', used: 'Used' }
 
@@ -20,6 +22,7 @@ function whoName(person, me) {
 
 export default function CodeCard({ code, color, me, onChanged, onToast }) {
   const [busy, setBusy] = useState(false)
+  const [manualCopy, setManualCopy] = useState(null)
 
   async function run(action, successMessage) {
     setBusy(true)
@@ -33,6 +36,17 @@ export default function CodeCard({ code, color, me, onChanged, onToast }) {
       setBusy(false)
     }
   }
+
+  const copy = () => run(async () => {
+    const { code: claimed, copied } = await claimAndCopy(code.id)
+    if (copied) onToast('Copied. Paste it in the McDonald\'s app. It\'s now Pending.')
+    else setManualCopy(claimed.code_text)
+  })
+
+  const answer = (submitted) => run(
+    () => api(`/codes/${code.id}/confirm`, { method: 'POST', body: { submitted } }),
+    submitted ? 'Marked as used' : 'Back to Available',
+  )
 
   const togglePrivate = () => {
     const visibility = code.visibility === 'private' ? 'shared' : 'private'
@@ -70,6 +84,11 @@ export default function CodeCard({ code, color, me, onChanged, onToast }) {
       )}
 
       <div className="code-actions">
+        {code.can_copy && (
+          <button type="button" className="btn btn-primary btn-copy" onClick={copy} disabled={busy}>
+            <CopyIcon size={20} /> {code.status === 'pending' ? 'Copy again' : 'Copy'}
+          </button>
+        )}
         {code.is_mine && (
           <button type="button" role="switch" aria-checked={code.visibility === 'private'}
             className="switch" onClick={togglePrivate} disabled={busy}>
@@ -83,6 +102,23 @@ export default function CodeCard({ code, color, me, onChanged, onToast }) {
           </button>
         )}
       </div>
+
+      {code.status === 'pending' && code.copied_by?.id === me && (
+        <div className="answer-row">
+          <span className="meta">Did you submit it?</span>
+          <button type="button" className="btn btn-secondary" onClick={() => answer(true)} disabled={busy}>Yes</button>
+          <button type="button" className="btn btn-secondary" onClick={() => answer(false)} disabled={busy}>No</button>
+        </div>
+      )}
+
+      {manualCopy && (
+        <Modal title="Copy this code" onClose={() => setManualCopy(null)}>
+          <p>Your browser didn't allow automatic copying. Press and hold the code to copy it.
+            It's marked Pending for you.</p>
+          <input className="manual-copy code-input" readOnly value={manualCopy} onFocus={(e) => e.target.select()} autoFocus />
+          <button type="button" className="btn btn-secondary btn-block" onClick={() => setManualCopy(null)}>Done</button>
+        </Modal>
+      )}
     </article>
   )
 }

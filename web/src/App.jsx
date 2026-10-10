@@ -4,6 +4,7 @@ import { textOn } from './colors.js'
 import { formatDay } from './format.js'
 import { HelpProvider, InfoButton } from './help.jsx'
 import Modal from './components/Modal.jsx'
+import PendingPrompt from './components/PendingPrompt.jsx'
 import { BoardIcon, CameraIcon, ListIcon, StarIcon, VaultIcon } from './components/icons.jsx'
 import Login from './screens/Login.jsx'
 import Board from './screens/Board.jsx'
@@ -44,6 +45,7 @@ function Shell({ user, season, onSignOut }) {
   const [today, setToday] = useState(null)
   const [toast, setToast] = useState(null)
   const [completedSets, setCompletedSets] = useState([])
+  const [toConfirm, setToConfirm] = useState([])
 
   const onChanged = useCallback(() => setVersion((v) => v + 1), [])
 
@@ -52,6 +54,21 @@ function Shell({ user, season, onSignOut }) {
     setToast({ id, message, kind })
     setTimeout(() => setToast((t) => (t?.id === id ? null : t)), 3500)
   }, [])
+
+  // A "session" lasts as long as this tab or home-screen app stays open. On a new
+  // session, ask about codes copied last time that are still Pending.
+  useEffect(() => {
+    const key = `mv.session.${user.id}`
+    let started = false
+    try { started = sessionStorage.getItem(key) === '1' } catch { /* unavailable */ }
+    const request = started ? api('/session/pending') : api('/session/start', { method: 'POST' })
+    request
+      .then((codes) => {
+        try { sessionStorage.setItem(key, '1') } catch { /* unavailable */ }
+        setToConfirm(codes)
+      })
+      .catch(() => {})
+  }, [user.id])
 
   useEffect(() => {
     api(`/season/today?tz=${encodeURIComponent(timeZone())}`).then(setToday).catch(() => {})
@@ -99,6 +116,11 @@ function Shell({ user, season, onSignOut }) {
       </nav>
 
       {toast && <div className={`toast toast-${toast.kind}`} role="status">{toast.message}</div>}
+
+      {toConfirm.length > 0 && (
+        <PendingPrompt codes={toConfirm} season={season} onToast={onToast}
+          onDone={(changed) => { setToConfirm([]); if (changed) onChanged() }} />
+      )}
 
       {completedSets.length > 0 && (
         <Modal title="Set complete!" onClose={() => setCompletedSets([])} className="celebrate">
