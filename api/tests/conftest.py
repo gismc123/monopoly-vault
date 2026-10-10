@@ -1,7 +1,8 @@
 """Test setup: an in-memory SQLite database and a temp photo folder per test."""
 import os
 
-os.environ.update(DATABASE_URL="sqlite://", JWT_SECRET="test-secret", CAMPAIGN_YEAR="2026", ALLOW_SIGNUP="true")
+os.environ.update(DATABASE_URL="sqlite://", JWT_SECRET="test-secret", CAMPAIGN_YEAR="2026", ALLOW_SIGNUP="true",
+                  PHOTO_SWEEP_ENABLED="false", SIGNUPS_PER_IP_PER_HOUR="100")
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -13,6 +14,7 @@ from app import models  # noqa: E402,F401
 from app.config import get_settings  # noqa: E402
 from app.db import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
+from app.ratelimit import limiter  # noqa: E402
 
 # Piece numbers from the 2026 season file, used throughout the tests.
 BALTIC, MEDITERRANEAN = 902, 901
@@ -23,6 +25,7 @@ PARK_PLACE, BOARDWALK = 921, 922
 def db_session(tmp_path, monkeypatch):
     monkeypatch.setenv("PHOTO_DIR", str(tmp_path / "photos"))
     get_settings.cache_clear()
+    limiter.reset()
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)

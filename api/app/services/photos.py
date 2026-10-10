@@ -2,16 +2,23 @@
 
 Layout: <PHOTO_DIR>/<year>/user-<id>/<random>.<ext>
 Only the relative path is saved in the database.
+
+A photo is uploaded before its code is confirmed. If the user cancels, the app
+discards it right away; anything left behind (e.g. the app was closed) is
+removed by `sweep_unclaimed` once it is older than UNCLAIMED_PHOTO_HOURS.
 """
 import io
 import re
+import time
 import uuid
 from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.models import User
+from app.models import Code, User
 from app.services.codes import AppError
 
 EXTENSIONS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
@@ -68,3 +75,35 @@ def delete_photo(relative: str) -> None:
         absolute_path(relative).unlink(missing_ok=True)
     except AppError:
         pass
+
+
+def _is_claimed(db: Session, relative: str) -> bool:
+    return db.scalar(select(Code.id).where(Code.photo_path == relative)) is not None
+
+
+def discard_upload(db: Session, user: User, year: int, token: str) -> None:
+    """Delete an uploaded photo that was never saved with a code (Retake / Cancel)."""
+    if not TOKEN_RE.match(token):
+        raise AppError(422, "Invalid photo reference.")
+    relative = f"{_user_dir(user, year)}/{token}"
+    if not _is_claimed(db, relative):
+        (root() / relative).unlink(missing_ok=True)
+
+
+def sweep_unclaimed(db: Session, max_age_hours: float, now: float | None = None) -> int:
+    """Delete photos older than `max_age_hours` that no code points to. Returns how many were removed.
+
+    Only files that look like ours (<year>/user-<id>/<32 hex>.<ext>) are touched,
+    so it is safe to point PHOTO_DIR at a shared NAS folder.
+    """
+    cutoff = (now or time.time()) - max_age_hours * 3600
+    claimed = set(db.scalars(select(Code.photo_path).where(Code.photo_path.is_not(None))))
+    removed = 0
+    for path in root().glob("[0-9][0-9][0-9][0-9]/user-*/*"):
+        if not (TOKEN_RE.match(path.name) and path.is_file()):
+            continue
+        relative = path.relative_to(root()).as_posix()
+        if relative not in claimed and path.stat().st_mtime < cutoff:
+            path.unlink(missing_ok=True)
+            removed += 1
+    return removed

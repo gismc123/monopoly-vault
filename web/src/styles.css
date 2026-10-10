@@ -590,3 +590,14 @@ button:disabled { opacity: .55; cursor: default; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+
+/* ---------- Terms & Privacy ---------- */
+
+.legal { max-width: 680px; margin: 0 auto; padding: calc(16px + env(safe-area-inset-top)) 16px 32px; }
+.legal h1 { margin: 16px 0 4px; color: var(--brand); }
+.legal h2 { margin: 24px 0 8px; }
+.legal ul { padding-left: 1.25rem; margin: 0 0 .75rem; }
+.legal li { margin-bottom: .4rem; }
+.legal a, .legal-footer a, .hint a { color: var(--focus); }
+.legal .btn-link { display: inline-block; text-decoration: none; }
+.legal-footer { margin-top: 24px; text-align: center; font-size: .9rem; color: var(--muted); }

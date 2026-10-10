@@ -23,6 +23,9 @@ accounts. Under the 2026 Official Rules, each person redeems from their own McDo
 physical stickers must be kept for Collect to Win prizes. McDonald's allows 8 code entries per day per account,
 and prize claims close November 22, 2026. The app shows both as reminders.
 
+Monopoly Vault is not affiliated with, endorsed by, or sponsored by McDonald's or Hasbro. McDonald's is a
+trademark of McDonald's Corporation, and MONOPOLY is a trademark of Hasbro.
+
 ## Quick start
 
 You need Docker with the Compose plugin (`docker compose version` should work).
@@ -75,9 +78,16 @@ All three have healthchecks and `restart: unless-stopped`. The API docs are at h
 | `JWT_SECRET` | *(required)* | Signs login tokens. Changing it signs everyone out. |
 | `JWT_EXPIRE_HOURS` | `720` | How long a login lasts (30 days) |
 | `ALLOW_SIGNUP` | `true` | Whether the sign-in screen offers "Create account" |
+| `LOGIN_MAX_FAILURES` | `10` | Failed sign-ins allowed per username before sign-in pauses |
+| `LOGIN_MAX_FAILURES_PER_IP` | `30` | Failed sign-ins allowed from one IP address (any usernames) |
+| `LOGIN_WINDOW_MINUTES` | `15` | The window for both limits above |
+| `SIGNUPS_PER_IP_PER_HOUR` | `10` | New accounts allowed from one IP address per hour |
+| `OPERATOR_NAME` | *(empty)* | Who runs this copy; shown on the Terms and Privacy pages |
+| `OPERATOR_CONTACT` | *(empty)* | An email address or URL for questions and deletion requests |
 | `CAMPAIGN_YEAR` | `2026` | Which season file is active (`api/app/seasons/<year>.json`) |
 | `PHOTOS_PATH` | `photos` | Where sticker photos are stored (see below) |
 | `MAX_UPLOAD_MB` | `12` | Largest photo accepted |
+| `UNCLAIMED_PHOTO_HOURS` | `24` | Unsaved photos older than this are deleted |
 
 `.env` is ignored by git. Only `.env.example` is committed.
 
@@ -103,8 +113,11 @@ To switch to a NAS:
    ```
 4. Set `PHOTOS_PATH=/mnt/nas/monopoly-vault/photos` in `.env` and run `docker compose up -d`.
 
-Files are laid out as `<year>/user-<id>/<random>.jpg`. A photo that was uploaded and then cancelled before
-saving stays in the folder unused. You can safely delete those.
+Files are laid out as `<year>/user-<id>/<random>.jpg`. A photo is uploaded before its code is confirmed. If
+the user taps Retake or Cancel, or leaves the screen, the app deletes it right away. Once an hour, the API also
+deletes photos older than `UNCLAIMED_PHOTO_HOURS` that no code points to (for example, when someone closed the
+app mid-capture). The sweep only touches files that match the layout above, so other files in a shared NAS
+folder are left alone.
 
 ## Using it on phones
 
@@ -148,10 +161,30 @@ Each October campaign is its own season, and nothing carries over between years.
 Vaults and codes are stored per year, so everyone starts the new season with an empty board and creates or
 joins a vault again.
 
+## Sign-in protection
+
+Sign-in is rate limited. After `LOGIN_MAX_FAILURES` wrong passwords for one username, or
+`LOGIN_MAX_FAILURES_PER_IP` from one IP address, within `LOGIN_WINDOW_MINUTES`, sign-in pauses until the window
+passes (HTTP 429 with `Retry-After`). A successful sign-in clears that username's count. Sign-ups are limited per
+IP address. Counts are kept in memory and reset when the API restarts.
+
+nginx passes the real client IP to the API. It trusts `X-Forwarded-For` only from proxies on private networks
+(10/8, 172.16/12, 192.168/16, localhost), so a reverse proxy on your LAN works out of the box and outside
+clients can't fake their address. If your reverse proxy has a public IP, add it with `set_real_ip_from` in
+`web/nginx.conf`.
+
+## Terms of Service and Privacy Policy
+
+The app has a Terms of Service page at `/terms` and a Privacy Policy at `/privacy`. They are linked from the
+sign-in screen, the sign-up form, and the Vault tab. Both describe what the app actually stores and does. Set
+`OPERATOR_NAME` and `OPERATOR_CONTACT` in `.env` so users know who runs your copy and how to reach you, for
+example to ask for their account to be deleted. The text is in `web/src/screens/Legal.jsx`. Review it and
+adjust it for your situation. It is a plain-language starting point, not legal advice.
+
 ## Tests
 
 The backend tests cover the status flow (Available, Pending, Used), the privacy rules, set completion, vaults,
-and OCR/photo handling. They use an in-memory SQLite database, so they don't need Postgres.
+OCR/photo handling and cleanup, and sign-in rate limiting. They use an in-memory SQLite database, so they don't need Postgres.
 
 ```sh
 docker compose run --rm --no-deps api pytest
@@ -196,3 +229,8 @@ docker-compose.yml   .env.example
 api/                 FastAPI app, Alembic migrations, season files, tests
 web/                 React PWA, nginx config, service worker, manifest
 ```
+
+## License
+
+[MIT](LICENSE). The license covers the software. The in-app Terms of Service and Privacy Policy cover the use of
+a particular running copy.

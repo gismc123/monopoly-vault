@@ -24,6 +24,10 @@ export default function Vault({ me, season, version, onChanged, onToast, onSignO
         <p>Signed in as <strong>{me.name}</strong> <span className="muted">(@{me.username})</span></p>
         <button type="button" className="btn btn-secondary btn-block" onClick={onSignOut}>Sign out</button>
       </div>
+
+      <footer className="legal-footer">
+        <a href="/terms">Terms of Service</a> · <a href="/privacy">Privacy Policy</a>
+      </footer>
     </div>
   )
 }

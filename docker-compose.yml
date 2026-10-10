@@ -29,7 +29,14 @@ services:
       ALLOW_SIGNUP: ${ALLOW_SIGNUP:-true}
       CAMPAIGN_YEAR: ${CAMPAIGN_YEAR:-2026}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-12}
+      UNCLAIMED_PHOTO_HOURS: ${UNCLAIMED_PHOTO_HOURS:-24}
       PHOTO_DIR: /data/photos
+      LOGIN_MAX_FAILURES: ${LOGIN_MAX_FAILURES:-10}
+      LOGIN_MAX_FAILURES_PER_IP: ${LOGIN_MAX_FAILURES_PER_IP:-30}
+      LOGIN_WINDOW_MINUTES: ${LOGIN_WINDOW_MINUTES:-15}
+      SIGNUPS_PER_IP_PER_HOUR: ${SIGNUPS_PER_IP_PER_HOUR:-10}
+      OPERATOR_NAME: ${OPERATOR_NAME:-}
+      OPERATOR_CONTACT: ${OPERATOR_CONTACT:-}
     volumes:
       # A named volume by default; set PHOTOS_PATH to an absolute host path (e.g. a NAS mount) to use that instead.
       - ${PHOTOS_PATH:-photos}:/data/photos

@@ -1,9 +1,11 @@
 import logging
 
 from fastapi import APIRouter, Depends, UploadFile
+from sqlalchemy.orm import Session
 
 from app.auth import current_user
 from app.config import get_settings
+from app.db import get_db
 from app.deps import current_season
 from app.models import User
 from app.season import Season
@@ -33,3 +35,10 @@ def read_photo(image: UploadFile, user: User = Depends(current_user), season: Se
         "candidates": ocr.find_code_candidates(text, season),
         "piece_number": ocr.find_piece(text, season),
     }
+
+
+@router.delete("/{photo_token}", status_code=204)
+def discard_photo(photo_token: str, user: User = Depends(current_user), db: Session = Depends(get_db),
+                  season: Season = Depends(current_season)):
+    """Throw away a photo the user decided not to save (Retake or Cancel)."""
+    photos.discard_upload(db, user, season.year, photo_token)

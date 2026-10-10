@@ -16,8 +16,17 @@ export default function AddCode({ season, onSaved, onToast }) {
   const [scan, setScan] = useState(null) // { photo_token, candidates, piece_number }
   const cameraInput = useRef(null)
   const uploadInput = useRef(null)
+  const unsavedToken = useRef(null) // uploaded photo not yet saved with a code
 
   useEffect(() => () => photoUrl && URL.revokeObjectURL(photoUrl), [photoUrl])
+
+  // Delete the uploaded photo if the user retakes, cancels, or leaves this screen without saving.
+  function discardPhoto() {
+    const token = unsavedToken.current
+    unsavedToken.current = null
+    if (token) api(`/ocr/${token}`, { method: 'DELETE' }).catch(() => {})
+  }
+  useEffect(() => discardPhoto, [])
 
   async function onPhoto(e) {
     const file = e.target.files?.[0]
@@ -28,7 +37,9 @@ export default function AddCode({ season, onSaved, onToast }) {
     const form = new FormData()
     form.append('image', file)
     try {
-      setScan(await api('/ocr', { method: 'POST', form }))
+      const result = await api('/ocr', { method: 'POST', form })
+      unsavedToken.current = result.photo_token
+      setScan(result)
       setStep('confirm')
     } catch (err) {
       onToast(err.message, 'error')
@@ -37,6 +48,7 @@ export default function AddCode({ season, onSaved, onToast }) {
   }
 
   function reset() {
+    discardPhoto()
     setPhotoUrl(null)
     setScan(null)
     setStep('choose')
@@ -86,7 +98,7 @@ export default function AddCode({ season, onSaved, onToast }) {
           photoUrl={photoUrl}
           scan={scan}
           onCancel={reset}
-          onSaved={(result) => { reset(); onSaved(result) }}
+          onSaved={(result) => { unsavedToken.current = null; reset(); onSaved(result) }}
           onToast={onToast}
         />
       )}

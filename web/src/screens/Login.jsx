@@ -59,6 +59,10 @@ export default function Login({ onSignedIn }) {
             autoComplete={signingUp ? 'new-password' : 'current-password'} minLength={signingUp ? 8 : 1} />
           {signingUp && <span className="hint">At least 8 characters.</span>}
         </label>
+        {signingUp && (
+          <p className="hint">By creating an account you agree to the <a href="/terms">Terms of Service</a> and{' '}
+            <a href="/privacy">Privacy Policy</a>.</p>
+        )}
         {error && <p className="error" role="alert">{error}</p>}
         <button className="btn btn-primary btn-block" disabled={busy}>
           {busy ? 'Please wait…' : signingUp ? 'Create account' : 'Sign in'}
@@ -69,6 +73,10 @@ export default function Login({ onSignedIn }) {
           </button>
         )}
       </form>
+
+      <footer className="legal-footer">
+        <a href="/terms">Terms of Service</a> · <a href="/privacy">Privacy Policy</a>
+      </footer>
     </main>
   )
 }

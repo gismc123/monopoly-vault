@@ -1,10 +1,11 @@
 """Photo capture: OCR suggestions, confirm step, and the saved original photo."""
 import io
+import time
 
 from PIL import Image
 
 from app.season import load_season
-from app.services import ocr
+from app.services import ocr, photos
 
 SEASON = load_season(2026)
 
@@ -72,3 +73,51 @@ def test_rejects_non_images_and_other_peoples_photo_tokens(household, monkeypatc
     assert stolen.status_code == 422
     traversal = ebony.post("/api/codes", {"code_text": "STEAL123", "piece_number": 901, "photo_token": "../x.jpg"})
     assert traversal.status_code == 422
+
+
+# --- Photos from cancelled captures ---
+
+def photo_files(tmp_root):
+    return sorted(p.name for p in tmp_root.rglob("*.jpg"))
+
+
+def upload(player, monkeypatch):
+    monkeypatch.setattr(ocr, "read_text", lambda data: "")
+    return player.post("/api/ocr", files={"image": ("s.jpg", jpeg_bytes(), "image/jpeg")}).json()["photo_token"]
+
+
+def test_retake_or_cancel_deletes_the_unsaved_photo(ivan, monkeypatch):
+    root = photos.root()
+    token = upload(ivan, monkeypatch)
+    assert photo_files(root) == [token]
+    assert ivan.client.delete(f"/api/ocr/{token}", headers=ivan.headers).status_code == 204
+    assert photo_files(root) == []
+
+
+def test_discard_never_deletes_a_saved_photo_or_someone_elses(household, monkeypatch):
+    ivan, ebony = household
+    root = photos.root()
+    saved = upload(ivan, monkeypatch)
+    ivan.post("/api/codes", {"code_text": "SAVE1234", "piece_number": 901, "photo_token": saved})
+    unsaved = upload(ivan, monkeypatch)
+
+    ivan.client.delete(f"/api/ocr/{saved}", headers=ivan.headers)
+    ebony.client.delete(f"/api/ocr/{unsaved}", headers=ebony.headers)
+    assert photo_files(root) == sorted([saved, unsaved])
+    assert ivan.client.delete("/api/ocr/..%2F..%2Fetc", headers=ivan.headers).status_code in (404, 422)
+
+
+def test_sweep_removes_only_old_unsaved_photos(ivan, monkeypatch, db_session):
+    root = photos.root()
+    saved = upload(ivan, monkeypatch)
+    ivan.post("/api/codes", {"code_text": "SAVE1234", "piece_number": 901, "photo_token": saved})
+    abandoned = upload(ivan, monkeypatch)
+    (root / "2026" / "notes.txt").write_text("not ours")  # unrelated files are left alone
+
+    with db_session() as db:
+        assert photos.sweep_unclaimed(db, max_age_hours=24) == 0  # too new
+        assert photos.sweep_unclaimed(db, max_age_hours=24, now=time.time() + 25 * 3600) == 1
+
+    assert photo_files(root) == [saved]
+    assert (root / "2026" / "notes.txt").exists()
+    assert abandoned not in photo_files(root)

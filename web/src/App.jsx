@@ -12,8 +12,17 @@ import Board from './screens/Board.jsx'
 import Codes from './screens/Codes.jsx'
 import AddCode from './screens/AddCode.jsx'
 import Vault from './screens/Vault.jsx'
+import Legal from './screens/Legal.jsx'
+
+const LEGAL_PAGES = { '/terms': 'terms', '/privacy': 'privacy' }
 
 export default function App() {
+  const legalPage = LEGAL_PAGES[window.location.pathname.replace(/\/+$/, '')]
+  if (legalPage) return <Legal page={legalPage} />
+  return <MainApp />
+}
+
+function MainApp() {
   const [user, setUser] = useState(savedUser)
   const [season, setSeason] = useState(null)
 
