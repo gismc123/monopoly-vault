@@ -4,7 +4,8 @@ import { claimAndCopy } from '../clipboard.js'
 import { formatDateTime } from '../format.js'
 import Modal from './Modal.jsx'
 import PhotoModal from './PhotoModal.jsx'
-import { CopyIcon, ImageIcon, LockIcon, TrashIcon } from './icons.jsx'
+import PieceSelect from './PieceSelect.jsx'
+import { CopyIcon, ImageIcon, LockIcon, PencilIcon, TrashIcon } from './icons.jsx'
 
 const STATUS_LABEL = { available: 'Available', pending: 'Pending', used: 'Used' }
 
@@ -21,10 +22,11 @@ function whoName(person, me) {
   return person.id === me ? 'you' : person.name
 }
 
-export default function CodeCard({ code, color, me, onChanged, onToast }) {
+export default function CodeCard({ code, color, season, me, onChanged, onToast }) {
   const [busy, setBusy] = useState(false)
   const [manualCopy, setManualCopy] = useState(null)
   const [showPhoto, setShowPhoto] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   async function run(action, successMessage) {
     setBusy(true)
@@ -104,6 +106,11 @@ export default function CodeCard({ code, color, me, onChanged, onToast }) {
           </button>
         )}
         {code.is_mine && code.status === 'available' && (
+          <button type="button" className="icon-btn" onClick={() => setEditing(true)} disabled={busy} aria-label="Edit code">
+            <PencilIcon size={20} />
+          </button>
+        )}
+        {code.is_mine && code.status === 'available' && (
           <button type="button" className="icon-btn" onClick={remove} disabled={busy} aria-label="Delete code">
             <TrashIcon size={20} />
           </button>
@@ -120,6 +127,11 @@ export default function CodeCard({ code, color, me, onChanged, onToast }) {
 
       {showPhoto && <PhotoModal code={code} onClose={() => setShowPhoto(false)} />}
 
+      {editing && (
+        <EditCodeModal code={code} season={season} onClose={() => setEditing(false)}
+          onSaved={() => { setEditing(false); onToast('Code updated'); onChanged() }} />
+      )}
+
       {manualCopy && (
         <Modal title="Copy this code" onClose={() => setManualCopy(null)}>
           <p>Your browser didn't allow automatic copying. Press and hold the code to copy it.
@@ -129,5 +141,48 @@ export default function CodeCard({ code, color, me, onChanged, onToast }) {
         </Modal>
       )}
     </article>
+  )
+}
+
+/** Fix a misread code or the wrong piece. Only for your own Available codes. */
+function EditCodeModal({ code, season, onClose, onSaved }) {
+  const [form, setForm] = useState({ code_text: code.code_text, piece_number: String(code.piece_number) })
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function save(e) {
+    e.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      await api(`/codes/${code.id}`, {
+        method: 'PATCH',
+        body: { code_text: form.code_text, piece_number: Number(form.piece_number) },
+      })
+      onSaved()
+    } catch (err) {
+      setError(err.message)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal title="Edit code" onClose={onClose}>
+      <form className="form" onSubmit={save}>
+        {code.has_photo && <p className="hint">Tap the photo button on the card to check it against the sticker.</p>}
+        <label htmlFor={`edit-code-${code.id}`}>Code</label>
+        <input id={`edit-code-${code.id}`} className="code-input" value={form.code_text}
+          onChange={(e) => setForm({ ...form, code_text: e.target.value })}
+          autoCapitalize="characters" autoCorrect="off" autoComplete="off" spellCheck="false" required autoFocus />
+
+        <label htmlFor={`edit-piece-${code.id}`}>Game piece</label>
+        <PieceSelect id={`edit-piece-${code.id}`} season={season} value={form.piece_number}
+          onChange={(piece_number) => setForm({ ...form, piece_number })} />
+
+        {error && <p className="error" role="alert">{error}</p>}
+        <button className="btn btn-primary btn-block" disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
+        <button type="button" className="btn btn-secondary btn-block" onClick={onClose} disabled={busy}>Cancel</button>
+      </form>
+    </Modal>
   )
 }

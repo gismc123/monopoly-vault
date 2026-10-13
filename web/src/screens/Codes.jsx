@@ -49,7 +49,7 @@ export default function Codes({ season, me, version, onChanged, onToast }) {
       {codes?.length === 0 && <p className="empty">No codes here yet.</p>}
       <div className="code-list">
         {codes?.map((c) => (
-          <CodeCard key={c.id} code={c} color={colorOf[c.set_id]} me={me.id} onChanged={onChanged} onToast={onToast} />
+          <CodeCard key={c.id} code={c} color={colorOf[c.set_id]} season={season} me={me.id} onChanged={onChanged} onToast={onToast} />
         ))}
       </div>
     </div>

@@ -43,6 +43,9 @@ export const ImageIcon = (p) => (
 export const TrashIcon = (p) => (
   <Svg {...p}><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></Svg>
 )
+export const PencilIcon = (p) => (
+  <Svg {...p}><path d="M4 20h4L19 9l-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></Svg>
+)
 export const UploadIcon = (p) => (
   <Svg {...p}><path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" /></Svg>
 )

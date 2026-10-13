@@ -23,6 +23,8 @@ export const HELP = {
         <p>Take a photo of the sticker and the app reads the code for you. You can also type it.</p>
         <p>Before saving, check the code and pick the game piece it came with. If the photo was misread, fix the
           text in the box. Spaces and dashes don't matter.</p>
+        <p>Spotted a mistake after saving? Tap the pencil on your code to fix the code or the piece. You can edit
+          a code only while it's Available.</p>
       </>
     ),
   },

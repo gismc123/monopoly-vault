@@ -45,6 +45,7 @@ class CodeIn(BaseModel):
 
 
 class CodePatch(BaseModel):
+    code_text: str | None = Field(default=None, min_length=1, max_length=64)
     visibility: Visibility | None = None
     piece_number: int | None = None
 

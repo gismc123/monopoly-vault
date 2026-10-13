@@ -179,14 +179,32 @@ def set_visibility(db: Session, code_id: int, user: User, visibility: Visibility
     return code
 
 
-def set_piece(db: Session, code_id: int, user: User, season: Season, piece_number: int) -> Code:
+def edit_code(
+    db: Session,
+    code_id: int,
+    user: User,
+    season: Season,
+    code_text: str | None = None,
+    piece_number: int | None = None,
+) -> Code:
+    """Fix a typo in the code or the piece it came with. Only Available codes can be changed."""
     code = get_own_code(db, code_id, user)
-    if piece_number not in season.pieces:
-        raise AppError(422, "Unknown game piece.")
     if code.status != CodeStatus.AVAILABLE:
         raise AppError(409, "Only Available codes can be changed.")
-    code.piece_number = piece_number
-    db.commit()
+    if code_text is not None:
+        text = normalize_code(code_text)
+        if not season.is_valid_code(text):
+            raise AppError(422, "That doesn't look like a valid code. Check it and try again.")
+        code.code_text = text
+    if piece_number is not None:
+        if piece_number not in season.pieces:
+            raise AppError(422, "Unknown game piece.")
+        code.piece_number = piece_number
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise AppError(409, "This code has already been added this season.")
     db.refresh(code)
     return code
 

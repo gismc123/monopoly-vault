@@ -86,8 +86,8 @@ def edit(code_id: int, body: CodePatch, user: User = Depends(current_user), db: 
     code = None
     if body.visibility is not None:
         code = svc.set_visibility(db, code_id, user, Visibility(body.visibility))
-    if body.piece_number is not None:
-        code = svc.set_piece(db, code_id, user, season, body.piece_number)
+    if body.code_text is not None or body.piece_number is not None:
+        code = svc.edit_code(db, code_id, user, season, body.code_text, body.piece_number)
     if code is None:
         code = svc.get_own_code(db, code_id, user)
     return code_out(code, user, season)

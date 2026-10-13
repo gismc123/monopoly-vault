@@ -123,7 +123,7 @@ function PieceSheet({ piece, scope, me, version, onClose, onChanged, onToast }) 
       {codes?.length === 0 && <p>Nobody {scope === 'mine' ? 'in your codes ' : ''}holds this piece yet.</p>}
       <div className="code-list">
         {codes?.map((c) => (
-          <CodeCard key={c.id} code={c} color={piece.color} me={me.id} onChanged={onChanged} onToast={onToast} />
+          <CodeCard key={c.id} code={c} color={piece.color} season={season} me={me.id} onChanged={onChanged} onToast={onToast} />
         ))}
       </div>
     </Modal>
