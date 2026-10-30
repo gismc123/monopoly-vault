@@ -155,7 +155,9 @@ Each October campaign is its own season, and nothing carries over between years.
 
 1. Copy `api/app/seasons/2026.json` to `api/app/seasons/<year>.json` and update the pieces, the winning
    combinations (`sets`), `daily_entry_limit`, `claim_deadline` and, if the code format changed,
-   `code_pattern` (a regular expression for a code after spaces and dashes are removed).
+   `code_pattern` (a regular expression for a code after spaces and dashes are removed). `code_length` and
+   `code_alphabet` describe how printed codes look (2026: 14 characters, never `A C E F I O P S U Y 0 2`); photo
+   reading uses them to fix look-alike misreads. Remove both if you don't know them yet.
 2. Set `CAMPAIGN_YEAR=<year>` in `.env` and run `docker compose up -d --build`.
 
 Vaults and codes are stored per year, so everyone starts the new season with an empty board and creates or

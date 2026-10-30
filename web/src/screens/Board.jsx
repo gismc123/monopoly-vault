@@ -99,7 +99,7 @@ export default function Board({ season, me, version, onChanged, onToast, onGoToV
       </div>
 
       {openPiece && (
-        <PieceSheet piece={openPiece} scope={scope} me={me} version={version}
+        <PieceSheet piece={openPiece} scope={scope} season={season} me={me} version={version}
           onClose={() => setOpenPiece(null)} onChanged={onChanged} onToast={onToast} />
       )}
     </div>
@@ -107,7 +107,7 @@ export default function Board({ season, me, version, onChanged, onToast, onGoToV
 }
 
 /** Tap a piece: see the codes that cover it. */
-function PieceSheet({ piece, scope, me, version, onClose, onChanged, onToast }) {
+function PieceSheet({ piece, scope, season, me, version, onClose, onChanged, onToast }) {
   const [codes, setCodes] = useState(null)
 
   useEffect(() => {

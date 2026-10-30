@@ -36,6 +36,9 @@ class Season:
     claim_deadline: date
     code_pattern: str
     sets: tuple[ColorSet, ...]
+    # How printed codes look, so OCR can fix look-alike misreads (S->5, O->Q). Not enforced on save.
+    code_length: int | None = None
+    code_alphabet: str | None = None
 
     @property
     def pieces(self) -> dict[int, Piece]:
@@ -75,4 +78,6 @@ def load_season(year: int) -> Season:
         claim_deadline=date.fromisoformat(data["claim_deadline"]),
         code_pattern=data["code_pattern"],
         sets=sets,
+        code_length=data.get("code_length"),
+        code_alphabet=data.get("code_alphabet"),
     )

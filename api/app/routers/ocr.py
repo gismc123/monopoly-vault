@@ -25,7 +25,7 @@ def read_photo(image: UploadFile, user: User = Depends(current_user), season: Se
     data = image.file.read(get_settings().max_upload_mb * 1024 * 1024 + 1)
     token = photos.save_upload(user, season.year, data)
     try:
-        text = ocr.read_text(data)
+        text = ocr.read_text(data, season)
     except Exception:
         log.exception("OCR failed")
         text = ""

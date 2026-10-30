@@ -27,10 +27,29 @@ def test_cannot_change_to_a_code_already_added(ivan):
     assert "already been added" in r.json()["detail"]
 
 
-def test_only_the_owner_can_edit(household):
+def test_vault_mates_can_fix_a_shared_code(household):
     ivan, ebony = household
     code = ivan.add_code("AAAA1111", BALTIC)["code"]
+    r = ebony.patch(f"/api/codes/{code['id']}", {"code_text": "BBBB2222", "piece_number": BOARDWALK})
+    assert r.status_code == 200, r.text
+    assert r.json()["code_text"] == "BBBB2222"
+    assert r.json()["owner"]["id"] == ivan.id  # still Ivan's code
+    assert ivan.codes()[0]["piece_number"] == BOARDWALK
+
+
+def test_private_codes_and_other_vaults_cannot_edit(household, stranger):
+    ivan, ebony = household
+    code = ivan.add_code("AAAA1111", BALTIC)["code"]
+    assert stranger.patch(f"/api/codes/{code['id']}", {"code_text": "BBBB2222"}).status_code == 404
+    ivan.patch(f"/api/codes/{code['id']}", {"visibility": "private"})
     assert ebony.patch(f"/api/codes/{code['id']}", {"code_text": "BBBB2222"}).status_code == 404
+    assert ivan.codes()[0]["code_text"] == "AAAA1111"
+
+
+def test_only_the_owner_can_make_private(household):
+    ivan, ebony = household
+    code = ivan.add_code("AAAA1111", BALTIC)["code"]
+    assert ebony.patch(f"/api/codes/{code['id']}", {"visibility": "private"}).status_code == 404
 
 
 def test_pending_codes_cannot_be_edited(ivan):

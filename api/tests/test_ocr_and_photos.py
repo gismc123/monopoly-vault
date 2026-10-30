@@ -24,14 +24,41 @@ def test_finds_grouped_codes_and_prefers_mixed_letters_and_digits():
 
 
 def test_finds_piece_by_number_or_name():
-    assert ocr.find_piece("blah 921 blah", SEASON) == 921
+    assert ocr.find_piece("blah #921 blah", SEASON) == 921
     assert ocr.find_piece("PENNSYLVANIA RAILROAD", SEASON) == 924
     assert ocr.find_piece("nothing here 123", SEASON) is None
 
 
+def test_the_need_list_is_not_mistaken_for_the_piece():
+    # Real sticker text where the "#928" was misread: the NEED list must not decide it's Water Works (927).
+    assert ocr.find_piece("ELECTRIC\nCOMPANY\n#92B, NEED 927/928\n$5,000$ BEST BUY TECH", SEASON) == 928
+    assert ocr.find_piece("PENNSYLVANIA\nRAILROAD\nNEED 923/924/925/926", SEASON) == 924
+    # Only the NEED list was read: don't guess.
+    assert ocr.find_piece("D 923/924/925/926\n923/924/925/926", SEASON) is None
+
+
+def test_piece_name_survives_misread_letters():
+    assert ocr.find_piece("B. & O.\nRAILROA\n#925. NEED 923/924/925/926", SEASON) == 925
+    assert ocr.find_piece("ANTIC AVENUE\n15, NEED 915/916/917", SEASON) == 915
+    assert ocr.find_piece("ILLINOIS AVE!\n#914, NEED 912/913/914", SEASON) == 914
+
+
+def test_fixes_look_alike_characters_in_printed_codes():
+    # Codes are 14 characters without S, I, O, 0 or 2, so these readings can be repaired.
+    text = "to collect properties*\nSXBD7KQ3HW9MRT\n*Must opt in to Rewards & register"
+    assert ocr.find_code_candidates(text, SEASON)[0] == "5XBD7KQ3HW9MRT"
+    assert ocr.find_code_candidates("K48) 3VQT6DMWHL", SEASON)[0] == "K48J3VQT6DMWHL"
+
+
+def test_clean_readings_beat_repaired_ones():
+    # The alphabet-only re-read says J; the first pass read I, which would be repaired to 1.
+    text = "QHV7TBM4DIZKGL\nQHV7TBM4DIZKGL\nQHV7TBM4DJZKGL\nQHV7TBM4DJZKGL"
+    assert ocr.find_code_candidates(text, SEASON)[:2] == ["QHV7TBM4DJZKGL", "QHV7TBM4D1ZKGL"]
+
+
 def test_photo_upload_confirm_and_view(household, monkeypatch):
     ivan, ebony = household
-    monkeypatch.setattr(ocr, "read_text", lambda data: "BOARDWALK\nZXCV 5678 BNMA")
+    monkeypatch.setattr(ocr, "read_text", lambda data, season=None: "BOARDWALK\nZXCV 5678 BNMA")
 
     read = ivan.post("/api/ocr", files={"image": ("sticker.jpg", jpeg_bytes(), "image/jpeg")})
     assert read.status_code == 200, read.text
@@ -53,7 +80,7 @@ def test_photo_upload_confirm_and_view(household, monkeypatch):
 
 def test_private_code_photo_is_owner_only(household, stranger, monkeypatch):
     ivan, ebony = household
-    monkeypatch.setattr(ocr, "read_text", lambda data: "")
+    monkeypatch.setattr(ocr, "read_text", lambda data, season=None: "")
     token = ivan.post("/api/ocr", files={"image": ("s.jpg", jpeg_bytes(), "image/jpeg")}).json()["photo_token"]
     code = ivan.post("/api/codes", {"code_text": "PRIV1234", "piece_number": 901, "visibility": "private",
                                     "photo_token": token}).json()["code"]
@@ -64,7 +91,7 @@ def test_private_code_photo_is_owner_only(household, stranger, monkeypatch):
 
 def test_rejects_non_images_and_other_peoples_photo_tokens(household, monkeypatch):
     ivan, ebony = household
-    monkeypatch.setattr(ocr, "read_text", lambda data: "")
+    monkeypatch.setattr(ocr, "read_text", lambda data, season=None: "")
     bad = ivan.post("/api/ocr", files={"image": ("notes.txt", b"hello", "text/plain")})
     assert bad.status_code == 422
 
@@ -82,7 +109,7 @@ def photo_files(tmp_root):
 
 
 def upload(player, monkeypatch):
-    monkeypatch.setattr(ocr, "read_text", lambda data: "")
+    monkeypatch.setattr(ocr, "read_text", lambda data, season=None: "")
     return player.post("/api/ocr", files={"image": ("s.jpg", jpeg_bytes(), "image/jpeg")}).json()["photo_token"]
 
 

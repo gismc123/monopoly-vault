@@ -4,6 +4,8 @@
   "daily_entry_limit": 8,
   "claim_deadline": "2026-11-22",
   "code_pattern": "[A-Z0-9]{8,16}",
+  "code_length": 14,
+  "code_alphabet": "13456789BDGHJKLMNQRTVWXZ",
   "sets": [
     {
       "id": 1,

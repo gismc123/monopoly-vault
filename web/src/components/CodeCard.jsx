@@ -105,7 +105,7 @@ export default function CodeCard({ code, color, season, me, onChanged, onToast }
             <ImageIcon size={20} />
           </button>
         )}
-        {code.is_mine && code.status === 'available' && (
+        {code.status === 'available' && (
           <button type="button" className="icon-btn" onClick={() => setEditing(true)} disabled={busy} aria-label="Edit code">
             <PencilIcon size={20} />
           </button>
@@ -144,7 +144,7 @@ export default function CodeCard({ code, color, season, me, onChanged, onToast }
   )
 }
 
-/** Fix a misread code or the wrong piece. Only for your own Available codes. */
+/** Fix a misread code or the wrong piece. Anyone in the vault can fix an Available code. */
 function EditCodeModal({ code, season, onClose, onSaved }) {
   const [form, setForm] = useState({ code_text: code.code_text, piece_number: String(code.piece_number) })
   const [error, setError] = useState('')

@@ -163,7 +163,7 @@ def entries_today(db: Session, user: User, tz_name: str, now: datetime | None = 
     ) or 0
 
 
-# --- Owner edits --------------------------------------------------------------
+# --- Edits --------------------------------------------------------------------
 
 def set_visibility(db: Session, code_id: int, user: User, visibility: Visibility) -> Code:
     code = get_own_code(db, code_id, user)
@@ -184,11 +184,17 @@ def edit_code(
     code_id: int,
     user: User,
     season: Season,
+    vault_id: int | None,
     code_text: str | None = None,
     piece_number: int | None = None,
 ) -> Code:
-    """Fix a typo in the code or the piece it came with. Only Available codes can be changed."""
-    code = get_own_code(db, code_id, user)
+    """Fix a typo in the code or the piece it came with.
+
+    Anyone who can see the code can fix it (its owner, or a vault-mate when it is
+    shared), since whoever spots the mistake may not be the one who added it.
+    Only Available codes can be changed.
+    """
+    code = get_visible_code(db, code_id, user, vault_id)
     if code.status != CodeStatus.AVAILABLE:
         raise AppError(409, "Only Available codes can be changed.")
     if code_text is not None:
